@@ -275,7 +275,9 @@ void RHIVulkanSwapchain::Initialize(IRHIContext* Context, RHIFormat InSwapchainF
 	if (vkCreateSemaphore(VulkanContext->Device, &semaphoreInfo, nullptr, &ImageAvailableSemaphore) != VK_SUCCESS ||
 		vkCreateSemaphore(VulkanContext->Device, &semaphoreInfo, nullptr, &RenderFinishSemaphore) != VK_SUCCESS ||
 		vkCreateFence(VulkanContext->Device, &fenceInfo, nullptr, &InFlightFence) != VK_SUCCESS || 
-		vkCreateSemaphore(VulkanContext->Device, &semaphoreInfo, nullptr, &TransitionFinishSemaphore) != VK_SUCCESS) {
+		vkCreateSemaphore(VulkanContext->Device, &semaphoreInfo, nullptr, &TransitionFinishSemaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(VulkanContext->Device, &semaphoreInfo, nullptr, &ImageAcquiredSemaphore) != VK_SUCCESS
+		) {
 		throw std::runtime_error("failed to create synchronization objects for a frame!");
 	}
 	Swapchain = nullptr;
@@ -302,6 +304,8 @@ void RHIVulkanSwapchain::Cleanup(IRHIContext* Context)
 	vkDestroySemaphore(VulkanContext->Device, ImageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(VulkanContext->Device, RenderFinishSemaphore, nullptr);
 	vkDestroyFence(VulkanContext->Device, InFlightFence, nullptr);
+	vkDestroySemaphore(VulkanContext->Device, TransitionFinishSemaphore, nullptr);
+	vkDestroySemaphore(VulkanContext->Device, ImageAcquiredSemaphore, nullptr);
 }
 
 void RHIVulkanSwapchain::AcquireFrame(IRHIContext* Context, IRHIFrameBuffer*& OutFrameBuffer, IRHIRenderPass* InRenderPass)
@@ -331,7 +335,7 @@ void RHIVulkanSwapchain::AcquireFrame(IRHIContext* Context, IRHIFrameBuffer*& Ou
 	vkResetFences(VulkanContext->Device, 1, &InFlightFence);
 
 	VkResult result = vkAcquireNextImageKHR(VulkanContext->Device, Swapchain,
-		UINT64_MAX, ImageAvailableSemaphore, VK_NULL_HANDLE, &CurrentImageIndex);
+		UINT64_MAX, ImageAcquiredSemaphore, VK_NULL_HANDLE, &CurrentImageIndex);
 
 	if (result==VK_ERROR_OUT_OF_DATE_KHR || result==VK_SUBOPTIMAL_KHR)
 	{
@@ -358,6 +362,12 @@ void RHIVulkanSwapchain::AcquireFrame(IRHIContext* Context, IRHIFrameBuffer*& Ou
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &TransitionCommandBuffer.CommandBuffer;
+	submitInfo.pWaitSemaphores = &ImageAcquiredSemaphore;
+	submitInfo.waitSemaphoreCount = 1;
+	VkPipelineStageFlags PipelineStageFlag = VkPipelineStageFlagBits::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	submitInfo.pWaitDstStageMask = &PipelineStageFlag;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &ImageAvailableSemaphore;
 
 	vkQueueSubmit(VulkanContext->GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(VulkanContext->GraphicsQueue);

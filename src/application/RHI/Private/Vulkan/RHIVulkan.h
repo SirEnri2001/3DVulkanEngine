@@ -190,6 +190,7 @@ public:
 	VkRenderPass CachedRenderPass; // framebuffer for this specified renderpass
 	uint32_t CurrentImageIndex;
 
+	VkSemaphore ImageAcquiredSemaphore;
 	VkSemaphore ImageAvailableSemaphore;
 	VkSemaphore RenderFinishSemaphore;
 	VkSemaphore TransitionFinishSemaphore;
