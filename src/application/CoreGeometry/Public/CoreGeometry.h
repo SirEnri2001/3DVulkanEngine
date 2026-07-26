@@ -16,6 +16,7 @@
 #include <array>
 #include <map>
 #include "tiny_obj_loader.h"
+#include "tiny_gltf_v3.h"
 
 namespace CoreGeometryImpl
 {
@@ -23,6 +24,14 @@ namespace CoreGeometryImpl
              std::vector<tinyobj::material_t> *materials, std::string *err,
              const char *filename, const char *mtl_basedir = nullptr,
              bool triangulate = true);
+    bool COREGEOMETRY_API TinyGltfLoad(tinygltf3::Model& OutModel, const std::string GLTFFileName);
+    int32_t COREGEOMETRY_API GLTFFindAttribute(const tg3_primitive* prim, const char* name);
+    float COREGEOMETRY_API GLTFReadFloat(const tg3_model* model, int32_t accessorIdx,
+        uint64_t elementIndex, int componentIndex);
+    uint32_t COREGEOMETRY_API GLTFReadIndex(const tg3_model* model, int32_t accessorIdx,
+        uint64_t elementIndex);
+    COREGEOMETRY_API tinygltf3::Model*  CreateGltfModel();
+    COREGEOMETRY_API  void  DeleteGltfModel(tinygltf3::Model* model);
 }
 
 
@@ -49,6 +58,7 @@ public:
     std::string TexturePath;
 
     static TMesh<VertexType, IndexType> LoadObj(const std::string ObjFileName);
+    static TMesh<VertexType, IndexType> LoadGLTF(const std::string GLTFFileName);
 };
 
 
@@ -203,6 +213,96 @@ TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadObj(const std::st
         }
     }
 
+    return OutMesh;
+}
+
+template <typename VertexType, typename IndexType>
+TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadGLTF(const std::string GLTFFileName)
+{
+    TMesh<VertexType, IndexType> OutMesh;
+
+    tinygltf3::Model* model = nullptr;
+    model = CoreGeometryImpl::CreateGltfModel();
+    //tinygltf3::ErrorStack errors;
+
+    //tg3_error_code ret = tinygltf3::parse_file(model, errors, GLTFFileName.c_str());
+    //if (ret != TG3_OK || errors.has_error()) {
+    //    std::string errMsg = "Failed to load glTF: " + GLTFFileName;
+    //    if (errors.count() > 0) {
+    //        const tg3_error_entry* e = errors.entry(0);
+    //        if (e && e->message) errMsg += std::string(" (") + e->message + ")";
+    //    }
+    //    throw std::runtime_error(errMsg);
+    //}
+
+    CoreGeometryImpl::TinyGltfLoad(*model, GLTFFileName);
+    tg3_model* m = model->get() ;
+    uint32_t CurrentIndex = 0;
+
+    for (uint32_t mi = 0; mi < m->meshes_count; mi++) {
+        const tg3_mesh* mesh = &m->meshes[mi];
+        for (uint32_t pi = 0; pi < mesh->primitives_count; pi++) {
+            const tg3_primitive* prim = &mesh->primitives[pi];
+
+            int32_t mode = prim->mode;
+            if (mode < 0) mode = TG3_MODE_TRIANGLES;
+            if (mode != TG3_MODE_TRIANGLES) {
+                throw std::runtime_error("LoadGLTF only supports TRIANGLES primitive mode!");
+            }
+
+            int32_t posAcc = CoreGeometryImpl::GLTFFindAttribute(prim, "POSITION");
+            int32_t norAcc = CoreGeometryImpl::GLTFFindAttribute(prim, "NORMAL");
+            int32_t texAcc = CoreGeometryImpl::GLTFFindAttribute(prim, "TEXCOORD_0");
+
+            if (posAcc < 0) {
+                throw std::runtime_error("LoadGLTF: primitive missing POSITION attribute!");
+            }
+
+            bool hasIndices = (prim->indices >= 0);
+            uint64_t indexCount = hasIndices ? m->accessors[prim->indices].count
+                                             : m->accessors[posAcc].count;
+
+            for (uint64_t i = 0; i < indexCount; i++) {
+                uint32_t vertIdx = hasIndices
+                    ? CoreGeometryImpl::GLTFReadIndex(m, prim->indices, i)
+                    : (uint32_t)i;
+
+                VertexType vertex{};
+                vertex.Position = {
+                    CoreGeometryImpl::GLTFReadFloat(m, posAcc, vertIdx, 0),
+                    CoreGeometryImpl::GLTFReadFloat(m, posAcc, vertIdx, 1),
+                    CoreGeometryImpl::GLTFReadFloat(m, posAcc, vertIdx, 2)
+                };
+
+                if (norAcc >= 0) {
+                    vertex.Normal = {
+                        CoreGeometryImpl::GLTFReadFloat(m, norAcc, vertIdx, 0),
+                        CoreGeometryImpl::GLTFReadFloat(m, norAcc, vertIdx, 1),
+                        CoreGeometryImpl::GLTFReadFloat(m, norAcc, vertIdx, 2)
+                    };
+                } else {
+                    vertex.Normal = {};
+                }
+
+                if (texAcc >= 0) {
+                    vertex.TexCoord = {
+                        CoreGeometryImpl::GLTFReadFloat(m, texAcc, vertIdx, 0),
+                        1.0f - CoreGeometryImpl::GLTFReadFloat(m, texAcc, vertIdx, 1)
+                    };
+                } else {
+                    vertex.TexCoord = {};
+                }
+
+                vertex.Color = {};
+                vertex.TangentTypeX = {};
+                vertex.TangentTypeY = {};
+
+                OutMesh.Vertices.push_back(vertex);
+                OutMesh.Indices.push_back((IndexType)CurrentIndex++);
+            }
+        }
+    }
+    CoreGeometryImpl::DeleteGltfModel(model);
     return OutMesh;
 }
 

@@ -59,5 +59,6 @@ protected:
 public:
     // Helpers
     void LoadMeshAndTexture(const std::string& MeshPath, const std::string& TexturePath);
+    void LoadGLTFTestScene(const std::string& GltfPath, const std::string& TexturePath);
     void UpdateUniforms(float4 ViewPos, RenderControl* control);
 };
