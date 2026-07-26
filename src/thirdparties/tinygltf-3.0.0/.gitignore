@@ -1,0 +1,97 @@
+# CMake
+/build/
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+#Files created by the CI scripts (downloading and installing premake)
+premake5
+premake5.tar.gz
+
+#built examples
+/examples/raytrace/bin/
+
+#visual studio files
+*.sln
+*.vcxproj*
+.vs
+
+# default cmake build dir
+build/
+
+#binary directories
+bin/
+obj/
+out/
+
+#runtime gui config
+imgui.ini
+
+#visual stuido code
+.vscode
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+loader_example
+tests/tester
+tests/tester_noexcept
+tests/tester_intensive_customjson
+tests/issue-97.gltf
+tests/issue-261.gltf
+tests/issue-495-external.gltf
+# Test-generated output files (written by tester.cc during test run)
+tests/Cube.gltf
+tests/Cube.bin
+tests/Cube.glb
+tests/Cube_BaseColor.png
+tests/Cube_MetallicRoughness.png
+tests/Cube_with_embedded_images.gltf
+tests/Cube_with_image_files.gltf
+tests/tmp.glb
+tests/ issue-236.gltf
+tests/ issue-236.bin
+tests/ 2x2 image  has multiple      spaces.png
+
+# unignore
+!Makefile
+!examples/build-gltf/Makefile
+!examples/raytrace/cornellbox_suzanne.obj
+!tests/Makefile
+!tools/windows/premake5.exe
