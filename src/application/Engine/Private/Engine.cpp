@@ -112,56 +112,57 @@ void Engine::Initialize(int width, int height, ERendererSelection Renderer, RHIB
     MaxFrames = InMaxFrames;
     OutputPath = InOutputPath;
 
-    if (RendererSelection == ERendererSelection::PathTracing) {
-        PTRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
-        PTRenderer.CreateResource();
-        CameraTransformLocalToWorld[0] = float4(0.f, 1.f, 0.f, 0.f);
-        CameraTransformLocalToWorld[1] = float4(-1.f, 0.f, 0.f, 0.f);
-        CameraTransformLocalToWorld[3] = float4(-0.27f, -0.8f, 0.27f, 1.f);
-        GControl.CameraTransformLocalToWorld = CameraTransformLocalToWorld;
-
-        PTRenderer.PTResource.SceneUniform->Initialize(PTRenderer.Env.Context, sizeof(ModelUniformObject), 8, RHIResourceState::BUFFER_UNIFORM);
-        
-        std::vector<ModelUniformObject> Objects;
-        
-        // Light
-        SetSceneUniform(2, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.535f)) * glm::rotate(float4x4(1.0), glm::radians(180.f), float3(0, 1, 0.)) * glm::scale(float4x4(1.0f), float3(0.065f, 0.05f, 1.f) * 2.f), float3(1.f, 1.f, 1.f), float3(1., 1., 1.));
-
-        // Floor
-        SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.27f, 0.001f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
-        // Celling
-        SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.54f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.27f, 0.001f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
-        // Leftwall
-        SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.54f, 0.27f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.001f, 0.27f, 0.27f)), float3(1.f, 0.f, 0.f), float3(0., 0., 0.));
-        // Rightwall
-        SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(0.f, 0.27f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.001f, 0.27f, 0.27f)), float3(0.f, 1.f, 0.f), float3(0., 0., 0.));
-        // Backwall
-        SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.54f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.001f, 0.27f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
-        //// Shortbox
-        //SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.185f, 0.169f, 0.0825f)) * glm::rotate(float4x4(1.0), glm::radians(-196.62f), float3(0, 0, 1.)) * glm::scale(float4x4(1.0f), float3(0.085f, 0.085f, 0.085f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
-        //// Tallbox
-        //SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.368f, 0.351f, 0.165f)) * glm::rotate(float4x4(1.0), glm::radians(-252.77f), float3(0, 0, 1.)) * glm::scale(float4x4(1.0f), float3(0.085f, 0.085f, 0.17f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
-        
-        // Cow
-        SetSceneUniform(0, Objects, glm::translate(float4x4(1.0), float3(-0.25f, 0.25f, 0.17f)) * 
-            glm::rotate(float4x4(1.0), glm::radians(180.f+45.f), float3(0, 0, 1)) * 
-            glm::rotate(float4x4(1.0), glm::radians(90.f), float3(1, 0, 0)) * 
-            glm::scale(float4x4(1.0f), float3(0.15f, 0.15f, 0.15f)), float3(1.f, 1.f, 0.f), float3(0., 0., 0.));
-        PTRenderer.cuo.modelUniformCount = Objects.size();
-        PTRenderer.PTResource.SceneUniform->CopyToBuffer(PTRenderer.Env.Context, Objects.data(), (uint32_t)(Objects.size() * sizeof(ModelUniformObject)));
-        PTRenderer.PTResource.PrimitiveBuffer->Initialize(PTRenderer.Env.Context, (uint32_t)(sizeof(ModelUniformObject) * Objects.size()), RHIResourceState::BUFFER_SHADER_STORAGE);
-        PTRenderer.PTResource.PrimitiveBuffer->CopyToBuffer(PTRenderer.Env.Context, Objects.data(), (uint32_t)(Objects.size() * sizeof(ModelUniformObject)));
-    }
-    else if (RendererSelection == ERendererSelection::BlinnPhong) {
-        BPRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
-        BPRenderer.CreateResource();
-        CameraTransformLocalToWorld = glm::translate(float4x4(1.0f), float3(-10.f, 0, 0.0f));
-        GControl.CameraTransformLocalToWorld = CameraTransformLocalToWorld;
-    }
-    else if (RendererSelection == ERendererSelection::Base) {
-        BRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
-    }
-    else if (RendererSelection == ERendererSelection::Switch) {
+    // if (RendererSelection == ERendererSelection::PathTracing) {
+    //     PTRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
+    //     PTRenderer.CreateResource();
+    //     CameraTransformLocalToWorld[0] = float4(0.f, 1.f, 0.f, 0.f);
+    //     CameraTransformLocalToWorld[1] = float4(-1.f, 0.f, 0.f, 0.f);
+    //     CameraTransformLocalToWorld[3] = float4(-0.27f, -0.8f, 0.27f, 1.f);
+    //     GControl.CameraTransformLocalToWorld = CameraTransformLocalToWorld;
+    //
+    //     PTRenderer.PTResource.SceneUniform->Initialize(PTRenderer.Env.Context, sizeof(ModelUniformObject), 8, RHIResourceState::BUFFER_UNIFORM);
+    //
+    //     std::vector<ModelUniformObject> Objects;
+    //
+    //     // Light
+    //     SetSceneUniform(2, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.535f)) * glm::rotate(float4x4(1.0), glm::radians(180.f), float3(0, 1, 0.)) * glm::scale(float4x4(1.0f), float3(0.065f, 0.05f, 1.f) * 2.f), float3(1.f, 1.f, 1.f), float3(1., 1., 1.));
+    //
+    //     // Floor
+    //     SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.27f, 0.001f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
+    //     // Celling
+    //     SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.27f, 0.54f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.27f, 0.001f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
+    //     // Leftwall
+    //     SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.54f, 0.27f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.001f, 0.27f, 0.27f)), float3(1.f, 0.f, 0.f), float3(0., 0., 0.));
+    //     // Rightwall
+    //     SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(0.f, 0.27f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.001f, 0.27f, 0.27f)), float3(0.f, 1.f, 0.f), float3(0., 0., 0.));
+    //     // Backwall
+    //     SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.27f, 0.54f, 0.27f)) * glm::scale(float4x4(1.0f), float3(0.27f, 0.001f, 0.27f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
+    //     //// Shortbox
+    //     //SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.185f, 0.169f, 0.0825f)) * glm::rotate(float4x4(1.0), glm::radians(-196.62f), float3(0, 0, 1.)) * glm::scale(float4x4(1.0f), float3(0.085f, 0.085f, 0.085f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
+    //     //// Tallbox
+    //     //SetSceneUniform(1, Objects, glm::translate(float4x4(1.0), float3(-0.368f, 0.351f, 0.165f)) * glm::rotate(float4x4(1.0), glm::radians(-252.77f), float3(0, 0, 1.)) * glm::scale(float4x4(1.0f), float3(0.085f, 0.085f, 0.17f)), float3(0.8f, 0.8f, 0.8f), float3(0., 0., 0.));
+    //
+    //     // Cow
+    //     SetSceneUniform(0, Objects, glm::translate(float4x4(1.0), float3(-0.25f, 0.25f, 0.17f)) *
+    //         glm::rotate(float4x4(1.0), glm::radians(180.f+45.f), float3(0, 0, 1)) *
+    //         glm::rotate(float4x4(1.0), glm::radians(90.f), float3(1, 0, 0)) *
+    //         glm::scale(float4x4(1.0f), float3(0.15f, 0.15f, 0.15f)), float3(1.f, 1.f, 0.f), float3(0., 0., 0.));
+    //     PTRenderer.cuo.modelUniformCount = Objects.size();
+    //     PTRenderer.PTResource.SceneUniform->CopyToBuffer(PTRenderer.Env.Context, Objects.data(), (uint32_t)(Objects.size() * sizeof(ModelUniformObject)));
+    //     PTRenderer.PTResource.PrimitiveBuffer->Initialize(PTRenderer.Env.Context, (uint32_t)(sizeof(ModelUniformObject) * Objects.size()), RHIResourceState::BUFFER_SHADER_STORAGE);
+    //     PTRenderer.PTResource.PrimitiveBuffer->CopyToBuffer(PTRenderer.Env.Context, Objects.data(), (uint32_t)(Objects.size() * sizeof(ModelUniformObject)));
+    // }
+    // else if (RendererSelection == ERendererSelection::BlinnPhong) {
+    //     BPRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
+    //     BPRenderer.CreateResource();
+    //     CameraTransformLocalToWorld = glm::translate(float4x4(1.0f), float3(-10.f, 0, 0.0f));
+    //     GControl.CameraTransformLocalToWorld = CameraTransformLocalToWorld;
+    // }
+    // else if (RendererSelection == ERendererSelection::Base) {
+    //     BRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
+    // }
+    // else if (RendererSelection == ERendererSelection::Switch)
+    {
         SRenderer.CreateRenderer(height, width, BackendSelection, bEnableValidation, Engine::ProcessInput);
         
         PTRenderer.SetEnv(SRenderer.Env);
@@ -209,6 +210,11 @@ void Engine::Initialize(int width, int height, ERendererSelection Renderer, RHIB
         SRenderer.AddRenderer(&BRenderer, "Base");
         SRenderer.AddRenderer(&BPRenderer, "Blinn Phong");
         SRenderer.CurrentSelection = 0;
+        if (RendererSelection==ERendererSelection::Base) {
+            SRenderer.CurrentSelection = 1;
+        }else if (RendererSelection==ERendererSelection::BlinnPhong) {
+            SRenderer.CurrentSelection = 2;
+        }
     }
 }
 
@@ -218,16 +224,17 @@ void Engine::Initialize(int width, int height, ERendererSelection Renderer, RHIB
 
     IRHIContext* ActiveContext = nullptr;
     IRenderer* ActiveRenderer = nullptr;
-    if (RendererSelection == ERendererSelection::PathTracing) {
-        ActiveContext = PTRenderer.Env.Context;
-        ActiveRenderer = &PTRenderer;
-    } else if (RendererSelection == ERendererSelection::BlinnPhong) {
-        ActiveContext = BPRenderer.Env.Context;
-        ActiveRenderer = &BPRenderer;
-    } else if (RendererSelection == ERendererSelection::Base) {
-        ActiveContext = BRenderer.Env.Context;
-        ActiveRenderer = &BRenderer;
-    } else if (RendererSelection == ERendererSelection::Switch) {
+    // if (RendererSelection == ERendererSelection::PathTracing) {
+    //     ActiveContext = PTRenderer.Env.Context;
+    //     ActiveRenderer = &PTRenderer;
+    // } else if (RendererSelection == ERendererSelection::BlinnPhong) {
+    //     ActiveContext = BPRenderer.Env.Context;
+    //     ActiveRenderer = &BPRenderer;
+    // } else if (RendererSelection == ERendererSelection::Base) {
+    //     ActiveContext = BRenderer.Env.Context;
+    //     ActiveRenderer = &BRenderer;
+    // } else if (RendererSelection == ERendererSelection::Switch)
+    {
         ActiveContext = SRenderer.Env.Context;
         ActiveRenderer = &SRenderer;
     }
@@ -244,17 +251,18 @@ void Engine::Initialize(int width, int height, ERendererSelection Renderer, RHIB
         ActiveRenderer->GetEnv(Env);
         ProcessInput(Env.ImGUI ? Env.ImGUI->GetGlobals() : nullptr);
 
-        if (RendererSelection == ERendererSelection::PathTracing) {
-            PTRenderer.UpdateUniformBuffer(GControl.CameraTransformLocalToWorld, time, &GControl);
-            PTRenderer.Render(float4(1.f), &GControl);
-            PTRenderer.ProcessInput();
-        } else if (RendererSelection == ERendererSelection::BlinnPhong) {
-            BPRenderer.Render(GControl.CameraTransformLocalToWorld[3], &GControl);
-            BPRenderer.Env.Context->ProcessFrameInput();
-        } else if (RendererSelection == ERendererSelection::Base) {
-            BRenderer.Render(float4(0.f), &GControl);
-            BRenderer.Env.Context->ProcessFrameInput();
-        } else if (RendererSelection == ERendererSelection::Switch) {
+        // if (RendererSelection == ERendererSelection::PathTracing) {
+        //     PTRenderer.UpdateUniformBuffer(GControl.CameraTransformLocalToWorld, time, &GControl);
+        //     PTRenderer.Render(float4(1.f), &GControl);
+        //     PTRenderer.ProcessInput();
+        // } else if (RendererSelection == ERendererSelection::BlinnPhong) {
+        //     BPRenderer.Render(GControl.CameraTransformLocalToWorld[3], &GControl);
+        //     BPRenderer.Env.Context->ProcessFrameInput();
+        // } else if (RendererSelection == ERendererSelection::Base) {
+        //     BRenderer.Render(float4(0.f), &GControl);
+        //     BRenderer.Env.Context->ProcessFrameInput();
+        // } else if (RendererSelection == ERendererSelection::Switch)
+        {
             if (SRenderer.CurrentSelection >= 0 && SRenderer.CurrentSelection < SRenderer.AddedRenderers.size()) {
                 if (SRenderer.AddedRenderers[SRenderer.CurrentSelection] == static_cast<BaseRenderer*>(&PTRenderer)) {
                     PTRenderer.UpdateUniformBuffer(GControl.CameraTransformLocalToWorld, time, &GControl);

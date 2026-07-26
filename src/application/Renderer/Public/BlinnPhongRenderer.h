@@ -23,10 +23,12 @@ public:
     // Mesh resources
     std::unique_ptr<IRHIBuffer> VertexBuffer;
     std::unique_ptr<IRHIBuffer> IndexBuffer;
+    std::vector<int> PrimitiveIndexCounts;
     uint32_t IndexCount = 0;
 
     // Texture resources
-    std::unique_ptr<IRHIImageResource> Texture;
+    //std::unique_ptr<IRHIImageResource> Texture;
+    std::vector<std::unique_ptr<IRHIImageResource>> BaseColorTextures;
 
     // Uniform buffers
     std::unique_ptr<IRHIBuffer> UBO;

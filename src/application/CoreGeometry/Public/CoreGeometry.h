@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreInline.inl"
+#include "../../CoreLog/Public/CoreLog.inl"
 #ifdef COREGEOMETRY_IMPLEMENT
 #define COREGEOMETRY_API DLL_EXPORT
 #else
@@ -55,6 +56,9 @@ public:
     using IndexType = TIndex;
     std::vector<VertexType> Vertices;
     std::vector<IndexType> Indices;
+    std::vector<int> MaterialPrimIndices;
+    std::vector<int> PrimitiveIndexCount;
+    std::vector<std::string> MaterialTextures;
     std::string TexturePath;
 
     static TMesh<VertexType, IndexType> LoadObj(const std::string ObjFileName);
@@ -238,12 +242,37 @@ TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadGLTF(const std::s
     CoreGeometryImpl::TinyGltfLoad(*model, GLTFFileName);
     tg3_model* m = model->get() ;
     uint32_t CurrentIndex = 0;
+    int TotalPrimitiveCount = 0;
+    auto pos = GLTFFileName.rfind("/");
+    std::string GltfPath;
+    if (pos == std::string::npos) {
+        pos = GLTFFileName.rfind("\\");
+    }
+    if (pos != std::string::npos) {
+        GltfPath = GLTFFileName.substr(0, pos);
+    }else {
+        GltfPath = ".";
+    }
+
+    for (int i = 0; i < m->materials_count; i++) {
+        int BaseColorTexIndex = m->materials[i].pbr_metallic_roughness.base_color_texture.index;
+        if (BaseColorTexIndex<0) {
+            OutMesh.MaterialTextures.push_back(std::string(""));
+            continue;
+        }
+        auto TextureSource = m->images[m->textures[BaseColorTexIndex].source].uri.data;
+        std::string TexFile = GltfPath + "/" + TextureSource;
+        Log("Add texture at path ", TexFile);
+        OutMesh.MaterialTextures.push_back(TexFile);
+    }
 
     for (uint32_t mi = 0; mi < m->meshes_count; mi++) {
         const tg3_mesh* mesh = &m->meshes[mi];
+        TotalPrimitiveCount += mesh->primitives_count;
+        OutMesh.MaterialPrimIndices.resize(TotalPrimitiveCount + OutMesh.MaterialPrimIndices.size());
         for (uint32_t pi = 0; pi < mesh->primitives_count; pi++) {
             const tg3_primitive* prim = &mesh->primitives[pi];
-
+            OutMesh.MaterialPrimIndices[pi + TotalPrimitiveCount] = prim->material;
             int32_t mode = prim->mode;
             if (mode < 0) mode = TG3_MODE_TRIANGLES;
             if (mode != TG3_MODE_TRIANGLES) {
@@ -261,7 +290,7 @@ TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadGLTF(const std::s
             bool hasIndices = (prim->indices >= 0);
             uint64_t indexCount = hasIndices ? m->accessors[prim->indices].count
                                              : m->accessors[posAcc].count;
-
+            OutMesh.PrimitiveIndexCount.push_back(indexCount);
             for (uint64_t i = 0; i < indexCount; i++) {
                 uint32_t vertIdx = hasIndices
                     ? CoreGeometryImpl::GLTFReadIndex(m, prim->indices, i)

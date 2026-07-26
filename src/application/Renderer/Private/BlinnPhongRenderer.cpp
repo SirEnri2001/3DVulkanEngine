@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 
 #include "imgui.h"
 
@@ -44,6 +45,8 @@ void BlinnPhongRenderer::LoadMeshAndTexture(const std::string& MeshPath, const s
         throw std::runtime_error("Failed to load texture: " + TexturePath);
     }
 
+    BaseColorTextures.push_back(Env.Context->CreateRHIImageResource());
+    auto& Texture = BaseColorTextures.back();
     Texture = Env.Context->CreateRHIImageResource();
     Texture->Initialize(Env.Context, (uint32_t)texHeight, (uint32_t)texWidth, RHIFormat::R8G8B8A8_SRGB, RHIResourceState::SHADER_READ | RHIResourceState::COPY_DST);
     
@@ -68,37 +71,52 @@ void BlinnPhongRenderer::LoadGLTFTestScene(const std::string& GltfPath, const st
     auto Mesh = TMesh<BlinnPhongVertex, uint32_t>::LoadGLTF(GltfPath);
     CalculateNormal<BlinnPhongVertex, uint32_t>(Mesh);
     IndexCount = (uint32_t)Mesh.Indices.size();
-
+    PrimitiveIndexCounts.assign(Mesh.PrimitiveIndexCount.begin(), Mesh.PrimitiveIndexCount.end());
     VertexBuffer->Initialize(Env.Context, sizeof(BlinnPhongVertex), (uint32_t)Mesh.Vertices.size(), RHIResourceState::BUFFER_VERTEX);
     IndexBuffer->Initialize(Env.Context, sizeof(uint32_t), (uint32_t)Mesh.Indices.size(), RHIResourceState::BUFFER_INDEX);
 
     VertexBuffer->CopyToBuffer(Env.Context, Mesh.Vertices.data(), (uint32_t)(Mesh.Vertices.size() * sizeof(BlinnPhongVertex)));
     IndexBuffer->CopyToBuffer(Env.Context, Mesh.Indices.data(), (uint32_t)(Mesh.Indices.size() * sizeof(uint32_t)));
 
-    // Load Texture
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(TexturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    if (!pixels) {
-        throw std::runtime_error("Failed to load texture: " + TexturePath);
+    for (auto& TexFilePath : Mesh.MaterialTextures) {
+        // Load Texture
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(TexFilePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        if (!pixels) {
+            throw std::runtime_error("Failed to load texture: " + TexFilePath);
+        }
+        BaseColorTextures.push_back(Env.Context->CreateRHIImageResource());
+        auto& Texture = BaseColorTextures.back();
+        Texture->Initialize(Env.Context, (uint32_t)texHeight, (uint32_t)texWidth, RHIFormat::R8G8B8A8_SRGB, RHIResourceState::SHADER_READ | RHIResourceState::COPY_DST);
+
+        // Copy texture data
+        auto Cmd = Env.Context->CreateRHICommandBuffer();
+        Cmd->Initialize(Env.Context);
+        Cmd->BeginCommandBuffer();
+        Texture->CopyToTexture(Cmd.get(), Env.Context, pixels, 4);
+        Texture->Transition(Cmd.get(), RHIResourceState::SHADER_READ);
+        Cmd->EndCommandBuffer();
+        stbi_image_free(pixels);
     }
 
-    Texture = Env.Context->CreateRHIImageResource();
-    Texture->Initialize(Env.Context, (uint32_t)texHeight, (uint32_t)texWidth, RHIFormat::R8G8B8A8_SRGB, RHIResourceState::SHADER_READ | RHIResourceState::COPY_DST);
-    
-    // Copy texture data
-    auto Cmd = Env.Context->CreateRHICommandBuffer();
-    Cmd->Initialize(Env.Context);
-    Cmd->BeginCommandBuffer();
-    Texture->CopyToTexture(Cmd.get(), Env.Context, pixels, 4);
-    Texture->Transition(Cmd.get(), RHIResourceState::SHADER_READ);
-    Cmd->EndCommandBuffer();
-    
-    // In some BRDF/PathTracer engines, we might need to submit this Cmd immediately.
-    // However, the IRHIContext doesn't expose a Submit method directly in the interface.
-    // Swapchain->PresentFrameAndRelease usually handles submission. 
-    // We'll trust the RHI implementation handles the copy.
-    
-    stbi_image_free(pixels);
+    // // Load Texture
+    // int texWidth, texHeight, texChannels;
+    // stbi_uc* pixels = stbi_load(TexturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    // if (!pixels) {
+    //     throw std::runtime_error("Failed to load texture: " + TexturePath);
+    // }
+    //
+    // Texture = Env.Context->CreateRHIImageResource();
+    // Texture->Initialize(Env.Context, (uint32_t)texHeight, (uint32_t)texWidth, RHIFormat::R8G8B8A8_SRGB, RHIResourceState::SHADER_READ | RHIResourceState::COPY_DST);
+    //
+    // // Copy texture data
+    // auto Cmd = Env.Context->CreateRHICommandBuffer();
+    // Cmd->Initialize(Env.Context);
+    // Cmd->BeginCommandBuffer();
+    // Texture->CopyToTexture(Cmd.get(), Env.Context, pixels, 4);
+    // Texture->Transition(Cmd.get(), RHIResourceState::SHADER_READ);
+    // Cmd->EndCommandBuffer();
+    // stbi_image_free(pixels);
 }
 
 bool BlinnPhongRenderer::BeginRender(IRHICommandBuffer* CommandBuffer, IRHIFrameBuffer*& OutFrameBuffer, RenderControl* control) {
@@ -106,18 +124,36 @@ bool BlinnPhongRenderer::BeginRender(IRHICommandBuffer* CommandBuffer, IRHIFrame
     return BaseRenderer::BeginRender(CommandBuffer, OutFrameBuffer, control);
 }
 
-void BlinnPhongRenderer::DrawPasses(IRHICommandBuffer* CommandBuffer, IRHIFrameBuffer* FrameBuffer, float4 ViewPos, RenderControl* control) {
+void BlinnPhongRenderer::DrawPasses(IRHICommandBuffer *CommandBuffer, IRHIFrameBuffer *FrameBuffer, float4 ViewPos,
+                                    RenderControl *control) {
     Env.RenderPass->BeginRenderPass(CommandBuffer, FrameBuffer);
-
+    int DrewPrimitives = 0;
     if (!control->RenderingPaused && !control->ShaderCompileHasError) {
-        Pipeline.PipelineObject->SetUniform(UBO.get(), 0);
-        Pipeline.PipelineObject->SetImageSampler(Texture.get(), 1);
-        Pipeline.PipelineObject->SetUniform(ModelUBO.get(), 2);
+        // auto Cmd = Env.Context->CreateRHICommandBuffer();
+        // Cmd->Initialize(Env.Context);
+        //while (PrimitiveIndexCounts.size() - DrewPrimitives > 0)
+        {
+            // Cmd->BeginCommandBuffer();
+            // Env.RenderPass->BeginRenderPass(Cmd.get(), FrameBuffer);
 
-        Pipeline.PipelineObject->BindVertexBuffer(VertexBuffer.get(), 0, 0);
-        Pipeline.PipelineObject->BindIndexBuffer(IndexBuffer.get(), 0);
+            Pipeline.PipelineObject->SetUniform(UBO.get(), 0);
+            Pipeline.PipelineObject->SetUniform(ModelUBO.get(), 2);
 
-        Pipeline.PipelineObject->Draw(CommandBuffer, IndexCount, 0, 1);
+            Pipeline.PipelineObject->BindVertexBuffer(VertexBuffer.get(), 0, 0);
+            Pipeline.PipelineObject->BindIndexBuffer(IndexBuffer.get(), 0);
+            int IndexOffset = 0;
+            for (int i = DrewPrimitives; i < std::min(16ul + DrewPrimitives, PrimitiveIndexCounts.size()); i++) {
+                Pipeline.PipelineObject->SetImageSampler(BaseColorTextures[i].get(), 1);
+                Pipeline.PipelineObject->Draw(CommandBuffer, PrimitiveIndexCounts[i], IndexOffset, 1);
+                IndexOffset += PrimitiveIndexCounts[i];
+            }
+            DrewPrimitives = std::min(16ul + DrewPrimitives, PrimitiveIndexCounts.size());
+
+            // Env.RenderPass->EndRenderPass(Cmd.get());
+            // Cmd->EndCommandBuffer();
+            // Cmd->SubmitCommandBuffer(Env.Context);
+            // Cmd->ResetCommandBuffer();
+        }
     }
 
     if (Env.ImGUI) {

@@ -392,4 +392,5 @@ public:
 	virtual void BeginCommandBuffer() override;
 	virtual void EndCommandBuffer() override;
 	virtual void ResetCommandBuffer() override;
+	virtual void SubmitCommandBuffer(IRHIContext* Context) override;
 };

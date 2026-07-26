@@ -173,6 +173,13 @@ void RHIVulkanContext::Initialize(const ContextCreateParams& Params)
 	CurrentPhysicalDevice.PhysicalDevice = AvailablePhysicalDevices[0];
 	vkGetPhysicalDeviceFeatures(CurrentPhysicalDevice.PhysicalDevice, &CurrentPhysicalDevice.PDFeatures);
 	vkGetPhysicalDeviceProperties(CurrentPhysicalDevice.PhysicalDevice, &CurrentPhysicalDevice.PDProperties);
+	VkPhysicalDeviceProperties2 PDProp2{};
+	VkPhysicalDevicePushDescriptorProperties PushDescriptorProp{};
+	PDProp2.pNext = &PushDescriptorProp;
+	PDProp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	PushDescriptorProp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES;
+	vkGetPhysicalDeviceProperties2(CurrentPhysicalDevice.PhysicalDevice, &PDProp2);
+	Log(PDProp2.properties.deviceName, " supports ", PushDescriptorProp.maxPushDescriptors, " push descriptors ");
 	vkGetPhysicalDeviceMemoryProperties(CurrentPhysicalDevice.PhysicalDevice, &CurrentPhysicalDevice.PDMemoryProperties);
 
 	Log("Select Physical Device: ", CurrentPhysicalDevice.PDProperties.deviceName);
@@ -576,4 +583,14 @@ void RHIVulkanCommandBuffer::EndCommandBuffer()
 void RHIVulkanCommandBuffer::ResetCommandBuffer()
 {
 	vkResetCommandBuffer(CommandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
+}
+
+void RHIVulkanCommandBuffer::SubmitCommandBuffer(IRHIContext* Context) {
+	auto* VulkanContext = static_cast<RHIVulkanContext*>(Context);
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &CommandBuffer;
+	vkQueueSubmit(VulkanContext->GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(VulkanContext->GraphicsQueue);
 }

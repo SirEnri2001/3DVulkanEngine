@@ -340,6 +340,7 @@ public:
     virtual void Cleanup(IRHIContext* Context) = 0;
     virtual void BeginCommandBuffer() = 0;
     virtual void EndCommandBuffer() = 0;
+    virtual void SubmitCommandBuffer(IRHIContext* Context) = 0;
     virtual void ResetCommandBuffer() = 0;
 };
 
