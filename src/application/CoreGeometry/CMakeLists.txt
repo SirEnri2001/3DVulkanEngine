@@ -11,6 +11,7 @@ add_library(CoreGeometry
 target_include_directories(CoreGeometry
 PUBLIC ./Public
 PRIVATE ./Private
+PUBLIC ../CoreInline
 )
 
 target_include_directories(CoreGeometry

@@ -13,6 +13,7 @@ void BaseRenderer::CreateRenderer(uint32_t Height, uint32_t Width, RHIBackend Ba
     Params.WindowWidth = Width;
     Params.WindowHeight = Height;
     Params.bEnableValidation = bEnableValidation;
+    Params.Window = WindowExtensionSelection::GLFW;
     Env.Context->Initialize(Params);
     Resource.Swapchain = Env.Context->CreateRHISwapchain();
     Resource.RenderPass = Env.Context->CreateRHIRenderPass();

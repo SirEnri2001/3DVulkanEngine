@@ -1,6 +1,8 @@
 #include "RHIWindowExtension.h"
 #include <GLFW/glfw3.h>
+#ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
 #include <GLFW/glfw3native.h>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -13,10 +15,12 @@
 #include <stdexcept>
 #ifdef _WIN32
 #include "imgui_impl_win32.h"
-#endif
 #include <vulkan/vulkan_win32.h>
 
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
 
 // --- RHIGLFWExtension ---
 RHIGLFWExtension::RHIGLFWExtension()
@@ -59,9 +63,11 @@ void RHIGLFWExtension::ProcessMessages() {
 bool RHIGLFWExtension::IsWindowAlive() {
     return pWindow && !glfwWindowShouldClose((GLFWwindow*)pWindow);
 }
+#ifdef _WIN32
 void* RHIGLFWExtension::GetHWND() {
     return glfwGetWin32Window((GLFWwindow*)pWindow);
 }
+#endif
 void RHIGLFWExtension::HookImGuiInit(RHIBackend Backend) {
     if (Backend == RHIBackend::Vulkan) {
         ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)pWindow, true);
@@ -80,6 +86,7 @@ void RHIGLFWExtension::Cleanup() {
     }
 }
 
+#ifdef _WIN32
 RHIHWNDExtension::RHIHWNDExtension() {}
 void RHIHWNDExtension::HookBeginContextInit() {
 #ifdef _WIN32
@@ -154,15 +161,12 @@ void RHIHWNDExtension::HookBeforeSurfaceInit() {
 
 }
 void RHIHWNDExtension::HookAfterSurfaceInit() {
-#ifdef _WIN32
     if (hWnd) {
         ShowWindow((HWND)hWnd, SW_SHOW);
         UpdateWindow((HWND)hWnd);
     }
-#endif
 }
 void RHIHWNDExtension::ProcessMessages() {
-#ifdef _WIN32
     MSG msg;
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) {
@@ -171,7 +175,6 @@ void RHIHWNDExtension::ProcessMessages() {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-#endif
 }
 bool RHIHWNDExtension::IsWindowAlive() {
     return bAlive;
@@ -196,24 +199,18 @@ void RHIHWNDExtension::CreateVkSurface(void* Instance, void** OutVkSurface)
 
 
 void RHIHWNDExtension::HookImGuiInit(RHIBackend Backend) {
-#ifdef _WIN32
     ImGui_ImplWin32_Init((HWND)hWnd);
-#endif
 }
 void RHIHWNDExtension::HookImGuiNewFrame() {
-#ifdef _WIN32
     ImGui_ImplWin32_NewFrame();
-#endif
 }
 void RHIHWNDExtension::Cleanup() {
-#ifdef _WIN32
     if (hWnd) {
         ::DestroyWindow((HWND)hWnd);
         hWnd = nullptr;
     }
-#endif
 }
-
+#endif
 std::unique_ptr<IRHIWindowExtension> CreateWindowExtension(WindowExtensionSelection Selection)
 {
     if (Selection == WindowExtensionSelection::GLFW)
@@ -222,7 +219,11 @@ std::unique_ptr<IRHIWindowExtension> CreateWindowExtension(WindowExtensionSelect
     }
     if (Selection == WindowExtensionSelection::HWND)
     {
+#ifdef _WIN32
         return std::make_unique<RHIHWNDExtension>();
+#else
+        assert(false);
+#endif
     }
     return std::make_unique<RHIGLFWExtension>();
 }

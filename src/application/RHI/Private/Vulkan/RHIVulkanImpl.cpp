@@ -54,7 +54,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBits
     if (messageSeverity== VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         Error("[Vulkan] ", pCallbackData->pMessage);
+#ifdef _WIN32
         __debugbreak();
+#else
+        throw std::runtime_error("Fatal error occurs");
+#endif
     }else if (messageSeverity == VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
         Warning("[Vulkan] ", pCallbackData->pMessage);
@@ -118,7 +122,9 @@ void CreateVkInstance(
     }
     InOutExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     InOutExtensions.push_back("VK_KHR_surface");
+#ifdef _WIN32
     InOutExtensions.push_back("VK_KHR_win32_surface");
+#endif
 
     const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"

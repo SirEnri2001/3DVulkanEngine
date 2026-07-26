@@ -29,7 +29,11 @@ IRHIPlatformSupport* IRHIPlatformSupport::Get(RHIBackend InBackend)
 		GInstances[Index] = std::make_unique<RHIVulkanPlatformSupport>();
 		break;
 	case RHIBackend::D3D12:
+#ifdef _WIN32
 		GInstances[Index] = std::make_unique<RHID3D12PlatformSupport>();
+#else
+		assert(false);
+#endif
 		break;
 	default:
 		break;

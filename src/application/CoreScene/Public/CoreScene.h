@@ -1,10 +1,10 @@
 #pragma once
-
+#include "CoreInline.inl"
 #ifdef CORESCENE_IMPLEMENT
-#define CORESCENE_API __declspec(dllexport)
+#define CORESCENE_API DLL_EXPORT
 #else
 #ifdef CORESCENE_INCLUDE
-#define CORESCENE_API __declspec(dllimport)
+#define CORESCENE_API DLL_IMPORT
 #else
 #error Please specify API linkage before include this file
 #define CORESCENE_API

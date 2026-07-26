@@ -16,6 +16,7 @@ PRIVATE ${json_INCLUDE_DIRS}
 target_include_directories(CoreScene
 PUBLIC ./Public
 PRIVATE ./Private
+PUBLIC ../CoreInline
 )
 
 target_link_libraries(CoreScene CoreGeometry CoreMath nlohmann_json)

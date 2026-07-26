@@ -1,4 +1,31 @@
 #pragma once
+#ifdef _WIN32
+#include <list>
+
+#include "RHID3D12.h"
+#include "directx/d3d12.h"
+#include "directx/d3d12sdklayers.h"
+#include "directx/d3dcommon.h"
+#include "directx/d3dx12_root_signature.h"
+#include "directx/dxgiformat.h"
+#include "wsl/wrladapter.h"
+#include <cstdint>
+#include <functional>
+#include <list>
+#include <memory>
+#include <tuple>
+#include <vector>
+
+#include "RHI.h"
+#include "RHIImGuiHelper.h"
+#include "directx/d3d12.h"
+#include "directx/d3d12sdklayers.h"
+#include "directx/d3dcommon.h"
+#include "directx/d3dx12_root_signature.h"
+#include "directx/dxgiformat.h"
+#include "wrl/client.h"
+#include "wsl/wrladapter.h"
+#pragma once
 
 #include <dxgi1_4.h>
 #include <directx/d3dx12_core.h>
@@ -448,3 +475,4 @@ public:
     virtual void EndCommandBuffer() override;
     virtual void ResetCommandBuffer() override;
 };
+#endif

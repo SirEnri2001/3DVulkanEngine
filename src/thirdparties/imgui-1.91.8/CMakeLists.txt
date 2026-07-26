@@ -30,17 +30,34 @@ set(LIBRARIES "glfw;Vulkan::Vulkan")
 # Use vulkan headers from glfw:
 include_directories(${GLFW_DIR}/deps)
 
+if(WIN32)
+  message(STATUS "ImGUI: Target is Windows")
+
+  add_library(imgui STATIC
+          ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+          ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+          ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp
+          ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+          ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp
+          ${IMGUI_DIR}/imgui_demo.cpp
+          ${IMGUI_DIR}/imgui_tables.cpp
+          ${IMGUI_DIR}/imgui_widgets.cpp
+  )
+elseif(APPLE)
+  message(STATUS "ImGUI: Target is macOS")
+
+  add_library(imgui STATIC
+          ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+          ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+          ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp
+          ${IMGUI_DIR}/imgui_demo.cpp
+          ${IMGUI_DIR}/imgui_tables.cpp
+          ${IMGUI_DIR}/imgui_widgets.cpp
+  )
+elseif(UNIX)
+  message(STATUS "ImGUI: Target is Linux/Unix-like")
+endif()
 # We want to statically link to ImGUI to reduce call overhead.
-add_library(imgui STATIC
-${IMGUI_DIR}/backends/imgui_impl_glfw.cpp 
-${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp 
-${IMGUI_DIR}/backends/imgui_impl_dx12.cpp 
-${IMGUI_DIR}/backends/imgui_impl_win32.cpp 
-${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp 
-${IMGUI_DIR}/imgui_demo.cpp 
-${IMGUI_DIR}/imgui_tables.cpp 
-${IMGUI_DIR}/imgui_widgets.cpp
-)
 target_link_libraries(imgui ${LIBRARIES})
 
 target_include_directories(imgui 

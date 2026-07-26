@@ -11,4 +11,5 @@ add_library(ShaderCompiler
 target_include_directories(ShaderCompiler
 PUBLIC ./Public
 PUBLIC ${CoreLog_MODULE_ROOT}/Public
+        PUBLIC ../CoreInline
 )

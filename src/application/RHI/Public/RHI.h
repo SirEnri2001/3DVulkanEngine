@@ -4,12 +4,12 @@
 
 
 #pragma once
-
+#include "CoreInline.inl"
 #ifdef RHI_IMPLEMENT
-#define RHI_API __declspec(dllexport)
+#define RHI_API DLL_EXPORT
 #else
 #ifdef RHI_INCLUDE
-#define RHI_API __declspec(dllimport)
+#define RHI_API DLL_IMPORT
 #else
 #error Please specify API linkage before include this file
 #define RHI_API

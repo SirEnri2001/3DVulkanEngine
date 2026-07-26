@@ -1,8 +1,5 @@
 #define CORESCENE_IMPLEMENT
 #include "CoreScene.h"
-
-#include <OCIdl.h>
-
 #include "nlohmann/json.hpp"
 
 #include <optional>

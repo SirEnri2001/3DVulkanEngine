@@ -1,10 +1,10 @@
 #pragma once
-
+#include "CoreInline.inl"
 #ifdef RENDERER_IMPLEMENT
-#define RENDERER_API __declspec(dllexport)
+#define RENDERER_API DLL_EXPORT
 #else
 #ifdef RENDERER_INCLUDE
-#define RENDERER_API __declspec(dllimport)
+#define RENDERER_API DLL_IMPORT
 #else
 #error Please specify API linkage before include this file
 #define RENDERER_API

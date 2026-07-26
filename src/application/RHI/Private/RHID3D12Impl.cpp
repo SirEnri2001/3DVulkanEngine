@@ -1,4 +1,28 @@
+#ifdef _WIN32
+#include <cstdint>
+#include <cstdio>
+#include <string>
+#include <vector>
 
+#include "RHID3D12.h"
+#include "spirv_cross.hpp"
+#include "spirv_glsl.hpp"
+#include "spirv_hlsl.hpp"
+#include "directx/d3d12.h"
+#include "directx/d3dcommon.h"
+#include "wsl/wrladapter.h"
+#include <cstdint>
+#include <cstdio>
+#include <string>
+#include <vector>
+
+#include "RHID3D12.h"
+#include "spirv_cross.hpp"
+#include "spirv_glsl.hpp"
+#include "spirv_hlsl.hpp"
+#include "directx/d3d12.h"
+#include "directx/d3dcommon.h"
+#include "wsl/wrladapter.h"
 
 #define RHI_IMPLEMENT
 #include "RHI.h"
@@ -164,3 +188,4 @@ std::string SPIRVToGLSL(const uint32_t* SPIRV_DATA, uint32_t size)
     std::string source = GLSL.compile();
     return source;
 }
+#endif

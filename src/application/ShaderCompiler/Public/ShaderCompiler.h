@@ -4,12 +4,12 @@
 
 
 #pragma once
-
+#include "CoreInline.inl"
 #ifdef SHADERCOMPILER_IMPLEMENT
-#define SHADERCOMPILER_API __declspec(dllexport)
+#define SHADERCOMPILER_API DLL_EXPORT
 #else
 #ifdef SHADERCOMPILER_INCLUDE
-#define SHADERCOMPILER_API __declspec(dllimport)
+#define SHADERCOMPILER_API DLL_IMPORT
 #else
 #error Please specify API linkage before include this file
 #define SHADERCOMPILER_API

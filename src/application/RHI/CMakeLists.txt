@@ -62,9 +62,14 @@ PRIVATE ${Vulkan_INCLUDE_DIRS}
 target_include_directories(RHI
 PUBLIC ./Public
 PRIVATE ./Private
+        PUBLIC ../CoreInline
 )
 
 add_dependencies(RHI CoreMath CoreLog)
 
+if(WIN32)
 target_link_libraries(RHI Vulkan::Vulkan imgui glfw CoreLog  DirectX-Headers d3d12 dxgi d3dcompiler dxguid spirv-cross-hlsl)
 target_link_libraries(RHI d3d12.lib)
+else()
+    target_link_libraries(RHI Vulkan::Vulkan imgui glfw CoreLog  DirectX-Headers spirv-cross-hlsl)
+endif()

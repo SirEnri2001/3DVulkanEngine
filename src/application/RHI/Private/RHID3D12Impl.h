@@ -1,4 +1,5 @@
 #pragma once
+#ifdef _WIN32
 #include <DirectXMath.h>
 #include <dxgi1_6.h>
 #include <stdexcept>
@@ -28,3 +29,4 @@ std::vector<uint32_t> read_spirv_file(const char* path);
 std::string SPIRVToHLSL(const uint32_t* SPIRV_DATA, uint32_t size);
 
 std::string SPIRVToGLSL(const uint32_t* SPIRV_DATA, uint32_t size);
+#endif

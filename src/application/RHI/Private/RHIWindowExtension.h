@@ -13,7 +13,9 @@ public:
     virtual void ProcessMessages() = 0;
 
     virtual bool IsWindowAlive() = 0;
+#ifdef _WIN32
     virtual void* GetHWND() = 0;
+#endif
     virtual void HookImGuiInit(RHIBackend Backend) = 0;
     virtual void HookImGuiNewFrame() = 0;
     virtual void Cleanup() = 0;
@@ -29,7 +31,9 @@ public:
     virtual void HookAfterSurfaceInit() override;
     virtual void ProcessMessages() override;
     virtual bool IsWindowAlive() override;
+#ifdef _WIN32
     virtual void* GetHWND() override;
+#endif
     virtual void HookImGuiInit(RHIBackend Backend) override;
     virtual void HookImGuiNewFrame() override;
     virtual void Cleanup() override;
@@ -46,7 +50,9 @@ public:
     virtual void HookAfterSurfaceInit() override;
     virtual void ProcessMessages() override;
     virtual bool IsWindowAlive() override;
+#ifdef _WIN32
     virtual void* GetHWND() override;
+#endif
     virtual void HookImGuiInit(RHIBackend Backend) override;
     virtual void HookImGuiNewFrame() override;
     virtual void Cleanup() override;

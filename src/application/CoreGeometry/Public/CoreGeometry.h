@@ -1,10 +1,10 @@
 #pragma once
-
+#include "CoreInline.inl"
 #ifdef COREGEOMETRY_IMPLEMENT
-#define COREGEOMETRY_API __declspec(dllexport)
+#define COREGEOMETRY_API DLL_EXPORT
 #else
 #ifdef COREGEOMETRY_INCLUDE
-#define COREGEOMETRY_API __declspec(dllimport)
+#define COREGEOMETRY_API DLL_IMPORT
 #else
 #error Please specify API linkage before include this file
 #define COREGEOMETRY_API
@@ -135,7 +135,7 @@ int BuildBVHBox_Recursive(std::vector<BVHBox<VertexType, IndexType>>& BVH_Array,
 }
 
 template<typename VertexType, typename IndexType>
-void BuildBVHOnMesh(TMesh<VertexType, IndexType>& InOutMesh, std::vector<BVHBox<typename VertexType, IndexType>>& OutBVHs) {
+void BuildBVHOnMesh(TMesh<VertexType, IndexType>& InOutMesh, std::vector<BVHBox<VertexType, IndexType>>& OutBVHs) {
     std::vector<std::array<VertexType, 3>> Triangles;
     Triangles.resize(InOutMesh.Vertices.size() / 3);
     for (int i = 0; i < (int)Triangles.size(); i++) {
