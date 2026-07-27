@@ -268,8 +268,7 @@ TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadGLTF(const std::s
 
     for (uint32_t mi = 0; mi < m->meshes_count; mi++) {
         const tg3_mesh* mesh = &m->meshes[mi];
-        TotalPrimitiveCount += mesh->primitives_count;
-        OutMesh.MaterialPrimIndices.resize(TotalPrimitiveCount + OutMesh.MaterialPrimIndices.size());
+        OutMesh.MaterialPrimIndices.resize(TotalPrimitiveCount + mesh->primitives_count + OutMesh.MaterialPrimIndices.size());
         for (uint32_t pi = 0; pi < mesh->primitives_count; pi++) {
             const tg3_primitive* prim = &mesh->primitives[pi];
             OutMesh.MaterialPrimIndices[pi + TotalPrimitiveCount] = prim->material;
@@ -330,6 +329,7 @@ TMesh<VertexType, IndexType> TMesh<VertexType, IndexType>::LoadGLTF(const std::s
                 OutMesh.Indices.push_back((IndexType)CurrentIndex++);
             }
         }
+        TotalPrimitiveCount += mesh->primitives_count;
     }
     CoreGeometryImpl::DeleteGltfModel(model);
     return OutMesh;

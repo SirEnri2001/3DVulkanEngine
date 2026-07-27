@@ -142,12 +142,12 @@ void BlinnPhongRenderer::DrawPasses(IRHICommandBuffer *CommandBuffer, IRHIFrameB
             Pipeline.PipelineObject->BindVertexBuffer(VertexBuffer.get(), 0, 0);
             Pipeline.PipelineObject->BindIndexBuffer(IndexBuffer.get(), 0);
             int IndexOffset = 0;
-            for (int i = DrewPrimitives; i < std::min(16ul + DrewPrimitives, PrimitiveIndexCounts.size()); i++) {
+            for (int i = DrewPrimitives; i < std::min(16ul + DrewPrimitives, (unsigned long)PrimitiveIndexCounts.size()); i++) {
                 Pipeline.PipelineObject->SetImageSampler(BaseColorTextures[i].get(), 1);
                 Pipeline.PipelineObject->Draw(CommandBuffer, PrimitiveIndexCounts[i], IndexOffset, 1);
                 IndexOffset += PrimitiveIndexCounts[i];
             }
-            DrewPrimitives = std::min(16ul + DrewPrimitives, PrimitiveIndexCounts.size());
+            DrewPrimitives = std::min(16ul + DrewPrimitives, (unsigned long)PrimitiveIndexCounts.size());
 
             // Env.RenderPass->EndRenderPass(Cmd.get());
             // Cmd->EndCommandBuffer();
