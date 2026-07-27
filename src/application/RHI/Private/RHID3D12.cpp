@@ -1,31 +1,6 @@
 #ifdef _WIN32
 #include "RHID3D12.h"
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <cstring>
-#include <iterator>
-#include <memory>
-#include <stdexcept>
-#include <vector>
-
-#include "imgui.h"
-#include "imgui_impl_dx12.h"
-#include "imgui_impl_win32.h"
-#include "RHI.h"
-#include "RHIImGuiHelper.h"
-#include "RHIWindowExtension.h"
-#include "directx/d3d12.h"
-#include "directx/d3d12sdklayers.h"
-#include "directx/d3dcommon.h"
-#include "directx/d3dx12_core.h"
-#include "directx/d3dx12_default.h"
-#include "directx/d3dx12_root_signature.h"
-#include "directx/dxgiformat.h"
-#include "wsl/wrladapter.h"
-#include "RHID3D12.h"
-
 #include <d3dcompiler.h>
 
 
@@ -1441,6 +1416,11 @@ void RHID3D12CommandBuffer::EndCommandBuffer()
 }
 
 void RHID3D12CommandBuffer::ResetCommandBuffer()
+{
+	
+}
+
+void RHID3D12CommandBuffer::SubmitCommandBuffer(IRHIContext* Context)
 {
 	
 }
