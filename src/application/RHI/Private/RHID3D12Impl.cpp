@@ -1,4 +1,4 @@
-
+#ifdef _WIN32
 
 #define RHI_IMPLEMENT
 #include "RHI.h"
@@ -164,3 +164,4 @@ std::string SPIRVToGLSL(const uint32_t* SPIRV_DATA, uint32_t size)
     std::string source = GLSL.compile();
     return source;
 }
+#endif

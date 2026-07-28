@@ -1,5 +1,5 @@
 #pragma once
-
+#ifdef _WIN32
 #include <dxgi1_4.h>
 #include <directx/d3dx12_core.h>
 #include <directx/d3dx12_root_signature.h>
@@ -449,3 +449,4 @@ public:
     virtual void ResetCommandBuffer() override;
     virtual void SubmitCommandBuffer(IRHIContext* Context) override;
 };
+#endif
